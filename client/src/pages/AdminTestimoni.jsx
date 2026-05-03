@@ -1,25 +1,30 @@
 import React, { useEffect, useState } from "react";
 import AdminLayout from "../pages/AdminLayout";
 
+const BASE_URL = "https://website-sekolah-production-8f69.up.railway.app";
+
 const AdminTestimoni = () => {
 
-  const BASE_URL = "http://localhost:5000";
   const [data, setData] = useState([]);
 
   // =====================
-  // AMBIL DATA (FIX)
+  // 🔥 FETCH DATA (FIX)
   // =====================
-  const fetchData = () => {
-    fetch(`${BASE_URL}/api/testimoni/admin`)
-      .then(res => {
-        if (!res.ok) throw new Error("Gagal fetch testimoni");
-        return res.json();
-      })
-      .then(res => {
-        const result = res.data || res; // 🔥 FIX UTAMA
-        setData(result);
-      })
-      .catch(err => console.log("FETCH ERROR:", err));
+  const fetchData = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/testimoni/admin`);
+
+      if (!res.ok) throw new Error("Gagal fetch testimoni");
+
+      const result = await res.json();
+
+      const list = Array.isArray(result) ? result : (result.data || []);
+
+      setData(list);
+
+    } catch (err) {
+      console.log("FETCH ERROR:", err);
+    }
   };
 
   useEffect(() => {
@@ -27,33 +32,33 @@ const AdminTestimoni = () => {
   }, []);
 
   // =====================
-  // UPDATE STATUS (FIX)
+  // 🔥 UPDATE STATUS (FIX)
   // =====================
-  const updateStatus = (id, currentStatus) => {
+  const updateStatus = async (id, currentStatus) => {
     const newStatus = Number(currentStatus) === 1 ? 0 : 1;
 
-    fetch(`${BASE_URL}/api/testimoni/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        status: newStatus
-      })
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text);
-        }
-      })
-      .then(() => {
-        fetchData(); // refresh
-      })
-      .catch(err => {
-        console.log("UPDATE ERROR:", err);
-        alert("Gagal update status testimoni");
+    try {
+      const res = await fetch(`${BASE_URL}/api/testimoni/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: newStatus
+        })
       });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
+      }
+
+      fetchData(); // refresh
+
+    } catch (err) {
+      console.log("UPDATE ERROR:", err);
+      alert("Gagal update status testimoni");
+    }
   };
 
   return (
@@ -90,7 +95,9 @@ const AdminTestimoni = () => {
                   alignItems: "center"
                 }}>
 
-                  <h3 style={{ margin: 0 }}>{item.nama}</h3>
+                  <h3 style={{ margin: 0 }}>
+                    {item.nama || "-"}
+                  </h3>
 
                   <span style={{
                     padding: "5px 10px",
@@ -109,14 +116,14 @@ const AdminTestimoni = () => {
                   color: "#444",
                   lineHeight: "1.5"
                 }}>
-                  {item.isi_testimoni}
+                  {item.isi_testimoni || "-"}
                 </p>
 
                 <p style={{
                   fontSize: "12px",
                   color: "gray"
                 }}>
-                  {item.tanggal}
+                  {item.tanggal || "-"}
                 </p>
 
                 <div style={{ marginTop: 15 }}>

@@ -1,6 +1,34 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 const KegiatanBerita = () => {
+
+  const BASE_URL = "https://website-sekolah-production-8f69.up.railway.app";
+
+  const [data, setData] = useState([]);
+
+  // 🔥 FETCH DATA
+  useEffect(() => {
+    fetch(`${BASE_URL}/api/berita`)
+      .then(res => {
+        if (!res.ok) throw new Error("Gagal fetch data");
+        return res.json();
+      })
+      .then(res => {
+        const result = Array.isArray(res) ? res : (res.data || []);
+        setData(result);
+      })
+      .catch(err => console.log(err));
+  }, []);
+
+  // 🔥 FILTER DATA
+  const kegiatan = data
+    .filter(item => item.kategori?.toLowerCase() === "kegiatan")
+    .slice(0, 4);
+
+  const berita = data
+    .filter(item => item.kategori?.toLowerCase() === "berita")
+    .slice(0, 4);
+
   return (
     <div style={{ padding: '60px 80px', background: '#f5f5f5' }}>
 
@@ -16,69 +44,48 @@ const KegiatanBerita = () => {
         justifyContent: 'center'
       }}>
 
-        {/* CARD 1 */}
-        <div style={{
-          width: '300px',
-          background: 'white',
-          borderRadius: '10px',
-          overflow: 'hidden',
-          boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
-        }}>
-          <img 
-            src="https://images.unsplash.com/photo-1588072432836-e10032774350"
-            style={{ width: '100%', height: '180px', objectFit: 'cover' }}
-            alt=""
-          />
-
-          <div style={{ padding: '15px' }}>
-            <span style={{
-              fontSize: '12px',
-              color: 'gray'
+        {kegiatan.length === 0 ? (
+          <p>Tidak ada kegiatan</p>
+        ) : (
+          kegiatan.map(item => (
+            <div key={item.id_konten} style={{
+              width: '300px',
+              background: 'white',
+              borderRadius: '10px',
+              overflow: 'hidden',
+              boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
             }}>
-              12 Oktober 2026
-            </span>
 
-            <h4 style={{ margin: '10px 0' }}>
-              Kegiatan ANBK Siswa
-            </h4>
+              <img 
+                src={
+                  item.gambar
+                    ? `${BASE_URL}/uploads/${item.gambar}`
+                    : "/images/bg1.jpeg"
+                }
+                style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                alt=""
+              />
 
-            <p style={{ fontSize: '14px' }}>
-              Siswa mengikuti kegiatan ANBK sebagai bagian dari evaluasi pendidikan nasional.
-            </p>
-          </div>
-        </div>
+              <div style={{ padding: '15px' }}>
+                <span style={{ fontSize: '12px', color: 'gray' }}>
+                  {item.tanggal
+                    ? item.tanggal.split("T")[0].split("-").reverse().join("/")
+                    : "-"}
+                </span>
 
-        {/* CARD 2 */}
-        <div style={{
-          width: '300px',
-          background: 'white',
-          borderRadius: '10px',
-          overflow: 'hidden',
-          boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
-        }}>
-          <img 
-            src="https://images.unsplash.com/photo-1601933470928-c9c3e0b19b0b"
-            style={{ width: '100%', height: '180px', objectFit: 'cover' }}
-            alt=""
-          />
+                <h4 style={{ margin: '10px 0' }}>
+                  {item.judul}
+                </h4>
 
-          <div style={{ padding: '15px' }}>
-            <span style={{
-              fontSize: '12px',
-              color: 'gray'
-            }}>
-              5 Oktober 2026
-            </span>
-
-            <h4 style={{ margin: '10px 0' }}>
-              Lomba Sekolah Sehat
-            </h4>
-
-            <p style={{ fontSize: '14px' }}>
-              Sekolah mengikuti lomba kebersihan dan kesehatan lingkungan antar sekolah.
-            </p>
-          </div>
-        </div>
+                <p style={{ fontSize: '14px' }}>
+                  {(item.isi || "").length > 100
+                    ? item.isi.substring(0, 100) + "..."
+                    : item.isi}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
 
       </div>
 
@@ -98,59 +105,43 @@ const KegiatanBerita = () => {
         justifyContent: 'center'
       }}>
 
-        {/* BERITA 1 */}
-        <div style={{
-          width: '300px',
-          background: 'white',
-          borderRadius: '10px',
-          padding: '15px',
-          boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
-        }}>
-          <span style={{
-            background: '#1976d2',
-            color: 'white',
-            padding: '5px 10px',
-            borderRadius: '10px',
-            fontSize: '12px'
-          }}>
-            10 Oktober 2026
-          </span>
+        {berita.length === 0 ? (
+          <p>Tidak ada berita</p>
+        ) : (
+          berita.map(item => (
+            <div key={item.id_konten} style={{
+              width: '300px',
+              background: 'white',
+              borderRadius: '10px',
+              padding: '15px',
+              boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+            }}>
 
-          <h4 style={{ margin: '10px 0' }}>
-            Siswa Raih Juara Cerdas Cermat
-          </h4>
+              <span style={{
+                background: '#1976d2',
+                color: 'white',
+                padding: '5px 10px',
+                borderRadius: '10px',
+                fontSize: '12px'
+              }}>
+                {item.tanggal
+                  ? item.tanggal.split("T")[0].split("-").reverse().join("/")
+                  : "-"}
+              </span>
 
-          <p style={{ fontSize: '14px' }}>
-            Siswa SD Negeri 103 Manado berhasil meraih juara dalam lomba cerdas cermat tingkat kota.
-          </p>
-        </div>
+              <h4 style={{ margin: '10px 0' }}>
+                {item.judul}
+              </h4>
 
-        {/* BERITA 2 */}
-        <div style={{
-          width: '300px',
-          background: 'white',
-          borderRadius: '10px',
-          padding: '15px',
-          boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
-        }}>
-          <span style={{
-            background: '#1976d2',
-            color: 'white',
-            padding: '5px 10px',
-            borderRadius: '10px',
-            fontSize: '12px'
-          }}>
-            8 Oktober 2026
-          </span>
+              <p style={{ fontSize: '14px' }}>
+                {(item.isi || "").length > 100
+                  ? item.isi.substring(0, 100) + "..."
+                  : item.isi}
+              </p>
 
-          <h4 style={{ margin: '10px 0' }}>
-            Pembukaan PPDB 2026
-          </h4>
-
-          <p style={{ fontSize: '14px' }}>
-            Sekolah membuka pendaftaran siswa baru untuk tahun ajaran 2026/2027.
-          </p>
-        </div>
+            </div>
+          ))
+        )}
 
       </div>
 

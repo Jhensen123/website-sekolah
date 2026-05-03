@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "../pages/AdminLayout";
 
+const BASE_URL = "https://website-sekolah-production-8f69.up.railway.app";
+
 const AdminGaleri = () => {
 
-  const BASE_URL = "http://localhost:5000";
   const [galeri, setGaleri] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [form, setForm] = useState({
     judul: "",
@@ -14,19 +16,21 @@ const AdminGaleri = () => {
 
   const [editId, setEditId] = useState(null);
 
-  // 🔥 FIX GET DATA
+  // 🔥 GET DATA (FIX)
   const getData = () => {
+    setLoading(true);
+
     fetch(`${BASE_URL}/api/galeri`)
       .then(res => {
         if (!res.ok) throw new Error("Gagal fetch galeri");
         return res.json();
       })
       .then(res => {
-        const data = res.data || res; // 🔥 FIX UTAMA
-        console.log("DATA DARI DB:", data);
+        const data = Array.isArray(res) ? res : (res.data || []);
         setGaleri(data);
       })
-      .catch(err => console.log(err));
+      .catch(err => console.log("ERROR:", err))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -41,6 +45,7 @@ const AdminGaleri = () => {
     setForm({ ...form, foto: e.target.files[0] });
   };
 
+  // 🔥 SUBMIT
   const handleSubmit = () => {
 
     if (!form.judul || !form.tanggal) {
@@ -100,11 +105,16 @@ const AdminGaleri = () => {
     setEditId(item.id_galeri);
   };
 
+  // 🔥 DELETE (FIX)
   const handleDelete = (id) => {
     fetch(`${BASE_URL}/api/galeri/${id}`, {
       method: "DELETE"
     })
-      .then(() => getData());
+      .then(res => {
+        if (!res.ok) throw new Error("Gagal hapus");
+        getData();
+      })
+      .catch(() => alert("Gagal hapus ❌"));
   };
 
   return (
@@ -155,48 +165,53 @@ const AdminGaleri = () => {
         </button>
       </div>
 
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(3, 1fr)",
-        gap: "20px"
-      }}>
-        {[...galeri]
-          .sort((a, b) => (b.tanggal || "").localeCompare(a.tanggal || ""))
-          .map((item) => (
-          <div key={item.id_galeri} style={{
-            background: "white",
-            padding: "15px",
-            borderRadius: "10px",
-            boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
-          }}>
+      {/* 🔥 LIST */}
+      {loading ? (
+        <p style={{ textAlign: "center" }}>Loading...</p>
+      ) : (
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: "20px"
+        }}>
+          {[...(galeri || [])]
+            .sort((a, b) => (b.tanggal || "").localeCompare(a.tanggal || ""))
+            .map((item) => (
+              <div key={item.id_galeri} style={{
+                background: "white",
+                padding: "15px",
+                borderRadius: "10px",
+                boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
+              }}>
 
-            <img
-              src={`${BASE_URL}/uploads/${item.file_foto}`}
-              alt=""
-              style={{
-                width: "100%",
-                height: "150px",
-                objectFit: "cover",
-                borderRadius: "10px"
-              }}
-            />
+                <img
+                  src={`${BASE_URL}/uploads/${item.file_foto}`}
+                  alt=""
+                  style={{
+                    width: "100%",
+                    height: "150px",
+                    objectFit: "cover",
+                    borderRadius: "10px"
+                  }}
+                />
 
-            <h4>{item.judul_foto}</h4>
+                <h4>{item.judul_foto}</h4>
 
-            <p style={{ fontSize: "13px", color: "gray" }}>
-              {item.tanggal
-              ? item.tanggal.split("T")[0].split("-").reverse().join("/")
-              : "-"}
-            </p>
+                <p style={{ fontSize: "13px", color: "gray" }}>
+                  {item.tanggal
+                    ? item.tanggal.split("T")[0].split("-").reverse().join("/")
+                    : "-"}
+                </p>
 
-            <div style={{ marginTop: "10px" }}>
-              <button onClick={() => handleEdit(item)}>Edit</button>
-              <button onClick={() => handleDelete(item.id_galeri)}>Hapus</button>
-            </div>
+                <div style={{ marginTop: "10px" }}>
+                  <button onClick={() => handleEdit(item)}>Edit</button>
+                  <button onClick={() => handleDelete(item.id_galeri)}>Hapus</button>
+                </div>
 
-          </div>
-        ))}
-      </div>
+              </div>
+            ))}
+        </div>
+      )}
     </AdminLayout>
   );
 };

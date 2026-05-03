@@ -2,22 +2,34 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db");
 const multer = require("multer");
+const fs = require("fs");
 const path = require("path");
 
-// =====================
-// MULTER (UPLOAD FOTO)
-// =====================
+// ===== PATH UPLOAD =====
+const uploadPath = path.join(__dirname, "../uploads");
+
+// AUTO CREATE FOLDER (WAJIB UNTUK RAILWAY)
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath, { recursive: true });
+}
+
+// ===== MULTER =====
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    const uniqueName = Date.now() + path.extname(file.originalname);
+    const uniqueName = Date.now() + "-" + file.originalname.replace(/\s/g, "_");
     cb(null, uniqueName);
   }
 });
 
 const upload = multer({ storage });
+
+// ===== VALIDASI TANGGAL =====
+const isValidDate = (date) => {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date);
+};
 
 // =====================
 // GET (URUT TERBARU)
@@ -30,21 +42,38 @@ router.get("/", (req, res) => {
 
   db.query(sql, (err, result) => {
     if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Gagal mengambil data" });
+      console.error("GET ERROR:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Gagal mengambil data"
+      });
     }
-    res.json(result);
+
+    res.json({
+      success: true,
+      data: result || []
+    });
   });
 });
 
 // =====================
-// POST (PAKAI TANGGAL MANUAL)
+// POST
 // =====================
 router.post("/", upload.single("gambar"), (req, res) => {
   let { judul, isi, kategori, tanggal } = req.body;
 
   if (!judul || !isi || !kategori || !tanggal) {
-    return res.status(400).json({ error: "Semua field wajib diisi!" });
+    return res.status(400).json({
+      success: false,
+      message: "Semua field wajib diisi"
+    });
+  }
+
+  if (!isValidDate(tanggal)) {
+    return res.status(400).json({
+      success: false,
+      message: "Format tanggal harus YYYY-MM-DD"
+    });
   }
 
   kategori = kategori.toLowerCase();
@@ -56,12 +85,20 @@ router.post("/", upload.single("gambar"), (req, res) => {
     VALUES (?, ?, ?, ?, ?)
   `;
 
-  db.query(sql, [judul, isi, gambar, kategori, tanggal], (err) => {
+  db.query(sql, [judul, isi, gambar, kategori, tanggal], (err, result) => {
     if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Gagal tambah data" });
+      console.error("INSERT ERROR:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Gagal tambah data"
+      });
     }
-    res.json({ message: "Berhasil ditambahkan" });
+
+    res.json({
+      success: true,
+      message: "Berhasil ditambahkan",
+      id: result.insertId
+    });
   });
 });
 
@@ -76,10 +113,17 @@ router.delete("/:id", (req, res) => {
     [id],
     (err) => {
       if (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Gagal hapus" });
+        console.error("DELETE ERROR:", err);
+        return res.status(500).json({
+          success: false,
+          message: "Gagal hapus"
+        });
       }
-      res.json({ message: "Berhasil dihapus" });
+
+      res.json({
+        success: true,
+        message: "Berhasil dihapus"
+      });
     }
   );
 });

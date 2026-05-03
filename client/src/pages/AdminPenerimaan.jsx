@@ -3,23 +3,27 @@ import AdminLayout from '../pages/AdminLayout';
 
 const AdminPenerimaan = () => {
 
-  const BASE_URL = "http://localhost:5000";
+  const BASE_URL = "https://website-sekolah-production-8f69.up.railway.app";
   const [dataSiswa, setDataSiswa] = useState([]);
 
   // =========================
-  // AMBIL DATA (FIX)
+  // GET DATA
   // =========================
-  useEffect(() => {
+  const fetchData = () => {
     fetch(`${BASE_URL}/api/ppdb`)
       .then(res => {
         if (!res.ok) throw new Error("Gagal fetch PPDB");
         return res.json();
       })
       .then(res => {
-        const result = res.data || res; // 🔥 FIX UTAMA
+        const result = Array.isArray(res) ? res : (res.data || []);
         setDataSiswa(result);
       })
       .catch(err => console.log(err));
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
   // =========================
@@ -36,15 +40,7 @@ const AdminPenerimaan = () => {
       .then(res => {
         if (!res.ok) throw new Error("Gagal update");
       })
-      .then(() => {
-        setDataSiswa(prev =>
-          prev.map(item =>
-            item.id_pendaftaran === id
-              ? { ...item, status }
-              : item
-          )
-        );
-      })
+      .then(() => fetchData())
       .catch(err => console.log(err));
   };
 
@@ -52,17 +48,15 @@ const AdminPenerimaan = () => {
   // DELETE
   // =========================
   const deleteData = (id) => {
+    if (!window.confirm("Yakin ingin hapus?")) return;
+
     fetch(`${BASE_URL}/api/ppdb/${id}`, {
       method: "DELETE"
     })
       .then(res => {
         if (!res.ok) throw new Error("Gagal hapus");
       })
-      .then(() => {
-        setDataSiswa(prev =>
-          prev.filter(item => item.id_pendaftaran !== id)
-        );
-      })
+      .then(() => fetchData())
       .catch(err => console.log(err));
   };
 
@@ -74,7 +68,7 @@ const AdminPenerimaan = () => {
 
     if (!namaBaru) return;
 
-    fetch(`${BASE_URL}/api/ppdb/edit/${item.id_calon_siswa}`, {
+    fetch(`${BASE_URL}/api/ppdb/${item.id_pendaftaran}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json"
@@ -87,15 +81,7 @@ const AdminPenerimaan = () => {
       .then(res => {
         if (!res.ok) throw new Error("Gagal edit");
       })
-      .then(() => {
-        setDataSiswa(prev =>
-          prev.map(s =>
-            s.id_calon_siswa === item.id_calon_siswa
-              ? { ...s, nama: namaBaru }
-              : s
-          )
-        );
-      })
+      .then(() => fetchData())
       .catch(err => console.log(err));
   };
 

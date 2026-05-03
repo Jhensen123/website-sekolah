@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../pages/AdminLayout';
 
-const AdminProfil = () => {
+const BASE_URL = "https://website-sekolah-production-8f69.up.railway.app";
 
-  const BASE_URL = "http://localhost:5000";
+const AdminProfil = () => {
 
   const [deskripsi, setDeskripsi] = useState("");
   const [sejarah, setSejarah] = useState("");
   const [foto, setFoto] = useState(null);
   const [previewFoto, setPreviewFoto] = useState("");
 
-  // ===== GET DATA =====
+  // ===== GET DATA (FIX) =====
   useEffect(() => {
-    fetch(`${BASE_URL}/api/profil`)
-      .then(res => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/api/profil`);
+
         if (!res.ok) throw new Error("Gagal fetch profil");
-        return res.json();
-      })
-      .then(res => {
-        const data = res.data || res;
+
+        const result = await res.json();
+
+        const data = result.data || result;
 
         setDeskripsi(data.deskripsi || "");
         setSejarah(data.sejarah || "");
@@ -26,16 +28,21 @@ const AdminProfil = () => {
         if (data.logo) {
           setPreviewFoto(`${BASE_URL}/uploads/${data.logo}`);
         }
-      })
-      .catch(err => console.log("FETCH ERROR:", err));
+
+      } catch (err) {
+        console.log("FETCH ERROR:", err);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  // ===== SAVE =====
+  // ===== SAVE (FIX) =====
   const handleSave = async () => {
     const formData = new FormData();
 
     formData.append("deskripsi", deskripsi);
-    formData.append("sejarah", sejarah); // 🔥 FIX
+    formData.append("sejarah", sejarah);
 
     if (foto) {
       formData.append("logo", foto);
@@ -57,7 +64,11 @@ const AdminProfil = () => {
       await res.json();
 
       alert("Profil berhasil diupdate ✅");
-      window.location.reload();
+
+      // 🔥 refresh tanpa reload full page
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
 
     } catch (err) {
       console.log("UPDATE ERROR:", err);

@@ -7,13 +7,16 @@ const PPDB = () => {
   return (
     <div style={{ background: '#f5f5f5', minHeight: '100vh' }}>
 
+      {/* HEADER */}
       <div style={{
         background: '#2f6fb3',
-        padding: '20px',
+        padding: '25px',
         color: 'white',
         textAlign: 'center'
       }}>
-        <h2>Penerimaan Peserta Didik Baru</h2>
+        <h2 style={{ margin: 0 }}>
+          Penerimaan Peserta Didik Baru
+        </h2>
       </div>
 
       <div style={{
@@ -23,7 +26,8 @@ const PPDB = () => {
         alignItems: 'center'
       }}>
 
-        <div style={{ display: 'flex', gap: '20px' }}>
+        {/* INFO BOX */}
+        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
 
           <div style={box}>
             📅 <br />
@@ -39,16 +43,20 @@ const PPDB = () => {
 
         </div>
 
+        {/* SYARAT */}
         <div style={{
-          width: '60%',
+          width: '100%',
+          maxWidth: '600px',
           background: '#dfe6ee',
           padding: '20px',
           borderRadius: '10px',
           marginTop: '30px'
         }}>
-          <h3 style={{ color: '#1976d2' }}>📌 Syarat Pendaftaran</h3>
+          <h3 style={{ color: '#1976d2', marginBottom: '10px' }}>
+            📌 Syarat Pendaftaran
+          </h3>
 
-          <ul>
+          <ul style={{ lineHeight: '1.8' }}>
             <li>Fotokopi Akta Kelahiran</li>
             <li>Fotokopi Kartu Keluarga</li>
             <li>Pas Foto 3x4</li>
@@ -56,6 +64,7 @@ const PPDB = () => {
           </ul>
         </div>
 
+        {/* BUTTON */}
         <button
           onClick={() => navigate('/ppdb/form')}
           style={{
@@ -65,10 +74,14 @@ const PPDB = () => {
             color: 'white',
             border: 'none',
             borderRadius: '20px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            transition: '0.3s'
           }}
+          onMouseEnter={(e) => e.target.style.opacity = "0.8"}
+          onMouseLeave={(e) => e.target.style.opacity = "1"}
         >
-          Daftar
+          Daftar Sekarang
         </button>
 
       </div>
@@ -81,7 +94,8 @@ const box = {
   padding: '20px',
   borderRadius: '10px',
   textAlign: 'center',
-  width: '200px'
+  width: '200px',
+  boxShadow: '0 3px 10px rgba(0,0,0,0.1)'
 };
 
 export default PPDB;

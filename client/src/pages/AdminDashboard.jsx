@@ -3,15 +3,19 @@ import { useNavigate } from "react-router-dom";
 import AdminLayout from "../pages/AdminLayout";
 
 const AdminDashboard = () => {
+  const BASE_URL = "https://website-sekolah-production-8f69.up.railway.app";
   const navigate = useNavigate();
 
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/ppdb")
-      .then(res => res.json())
+    fetch(`${BASE_URL}/api/ppdb`)
+  .then(res => {
+    if (!res.ok) throw new Error("Gagal fetch PPDB");
+    return res.json();
+  })
       .then(res => {
-        setData(res.data || []);
+      setData(Array.isArray(res) ? res : (res.data || []));
       })
       .catch(err => console.log(err));
   }, []);
@@ -96,7 +100,7 @@ const AdminDashboard = () => {
 
   // 🔥 UPDATE STATUS
   function updateStatus(id, status) {
-    fetch(`http://localhost:5000/api/ppdb/${id}`, {
+    fetch(`${BASE_URL}/api/ppdb/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status })

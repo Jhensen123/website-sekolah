@@ -5,8 +5,8 @@ const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 
-// ===== PATH UPLOAD =====
-const uploadPath = path.join(__dirname, "../uploads");
+// ===== PATH UPLOAD (FIX PRODUCTION) =====
+const uploadPath = path.join(process.cwd(), "uploads");
 
 // auto create folder
 if (!fs.existsSync(uploadPath)) {
@@ -26,7 +26,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ===== GET PROFIL =====
+// ===== GET PROFIL (FIX RESPONSE) =====
 router.get("/", (req, res) => {
   db.query("SELECT * FROM profil_sekolah LIMIT 1", (err, result) => {
     if (err) {
@@ -36,14 +36,20 @@ router.get("/", (req, res) => {
 
     if (!result || result.length === 0) {
       return res.json({
-        id_profil: 1,
-        deskripsi: "",
-        sejarah: "",
-        logo: ""
+        success: true,
+        data: {
+          id_profil: 1,
+          deskripsi: "",
+          sejarah: "",
+          logo: ""
+        }
       });
     }
 
-    res.json(result[0]);
+    res.json({
+      success: true,
+      data: result[0]
+    });
   });
 });
 
@@ -55,9 +61,6 @@ router.put("/", (req, res) => {
       console.log("UPLOAD ERROR:", err);
       return res.status(500).json({ message: "Upload gagal" });
     }
-
-    console.log("BODY:", req.body);
-    console.log("FILE:", req.file);
 
     const { deskripsi, sejarah } = req.body;
     const logoBaru = req.file ? req.file.filename : null;
@@ -79,11 +82,14 @@ router.put("/", (req, res) => {
               return res.status(500).json({ message: "Gagal insert" });
             }
 
-            return res.json({ message: "Profil berhasil ditambahkan ✅" });
+            return res.json({
+              success: true,
+              message: "Profil berhasil ditambahkan ✅"
+            });
           }
         );
       } else {
-        // ===== UPDATE (FIX UTAMA) =====
+        // ===== UPDATE =====
         const dataLama = result[0];
         const logoFinal = logoBaru ? logoBaru : dataLama.logo;
 
@@ -101,7 +107,10 @@ router.put("/", (req, res) => {
               return res.status(500).json({ message: "Gagal update profil" });
             }
 
-            res.json({ message: "Profil berhasil diupdate ✅" });
+            res.json({
+              success: true,
+              message: "Profil berhasil diupdate ✅"
+            });
           }
         );
       }

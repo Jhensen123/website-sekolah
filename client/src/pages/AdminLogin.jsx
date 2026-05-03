@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const BASE_URL = "https://website-sekolah-production-8f69.up.railway.app";
+
 const AdminLogin = () => {
   const navigate = useNavigate();
 
@@ -19,10 +21,16 @@ const AdminLogin = () => {
   };
 
   const handleLogin = async () => {
+
+    if (!form.username || !form.password) {
+      alert("Username dan password wajib diisi ❌");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/admin/login", {
+      const res = await fetch(`${BASE_URL}/api/admin/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -30,16 +38,29 @@ const AdminLogin = () => {
         body: JSON.stringify(form)
       });
 
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
+      }
+
       const data = await res.json();
 
       if (data.success) {
+        // 🔥 FIX UTAMA (WAJIB SAMA DENGAN ProtectedRoute)
+        localStorage.setItem("adminLogin", "true");
+
+        // 🔥 SIMPAN DATA ADMIN (opsional)
+        localStorage.setItem("adminData", JSON.stringify(data.admin || data.user));
+
+        alert("Login berhasil ✅");
+
         navigate("/admin/dashboard");
       } else {
-        alert(data.message);
+        alert(data.message || "Login gagal ❌");
       }
 
     } catch (err) {
-      console.log(err);
+      console.log("LOGIN ERROR:", err);
       alert("Server error ❌");
     } finally {
       setLoading(false);
@@ -53,16 +74,17 @@ const AdminLogin = () => {
 
         <img 
           src="https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg"
-          alt=""
+          alt="logo"
           style={logo}
         />
 
-        <h2>Login</h2>
+        <h2>Login Admin</h2>
         <p>Selamat datang di SD Negeri 103 Manado</p>
 
         <input
           name="username"
           placeholder="Username"
+          value={form.username}
           onChange={handleChange}
           style={input}
         />
@@ -71,6 +93,7 @@ const AdminLogin = () => {
           type="password"
           name="password"
           placeholder="Password"
+          value={form.password}
           onChange={handleChange}
           style={input}
         />
@@ -91,7 +114,7 @@ const AdminLogin = () => {
 
 export default AdminLogin;
 
-/* ===== STYLE (BALIK KE FIGMA) ===== */
+/* ===== STYLE ===== */
 
 const container = {
   height: '100vh',

@@ -1,49 +1,54 @@
 import React, { useEffect, useState } from "react";
 import AdminLayout from "../pages/AdminLayout";
 
+const BASE_URL = "https://website-sekolah-production-8f69.up.railway.app";
+
 const AdminKomentar = () => {
-  const BASE_URL = "http://localhost:5000";
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = () => {
+  // 🔥 FETCH DATA (FIX)
+  const fetchData = async () => {
     setLoading(true);
 
-    fetch(`${BASE_URL}/api/komentar`)
-      .then(res => {
-        if (!res.ok) throw new Error("Gagal fetch komentar");
-        return res.json();
-      })
-      .then(res => {
-        const result = res.data || res; // 🔥 FIX UTAMA
-        console.log("DATA API:", result);
-        setData(result);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.log("Error fetch komentar:", err);
-        setLoading(false);
-      });
+    try {
+      const res = await fetch(`${BASE_URL}/api/komentar`);
+
+      if (!res.ok) throw new Error("Gagal fetch komentar");
+
+      const result = await res.json();
+
+      const list = Array.isArray(result) ? result : (result.data || []);
+
+      console.log("DATA API:", list);
+
+      setData(list);
+
+    } catch (err) {
+      console.log("Error fetch komentar:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  // 🔥 DELETE (FIX)
   const handleDelete = async (id) => {
-    const fixedId = Number(id);
-
     if (!window.confirm("Yakin ingin menghapus komentar ini?")) return;
 
     try {
       const res = await fetch(
-        `${BASE_URL}/api/komentar/${fixedId}`,
+        `${BASE_URL}/api/komentar/${id}`,
         { method: "DELETE" }
       );
 
       if (!res.ok) throw new Error("Delete gagal");
 
       fetchData();
+
     } catch (err) {
       console.log(err);
       alert("Gagal menghapus komentar");
@@ -86,7 +91,7 @@ const AdminKomentar = () => {
                 }}>
                   <th style={thStyle}>No</th>
                   <th style={thStyle}>Nama</th>
-                  <th style={thStyle}>Komentar/saran</th>
+                  <th style={thStyle}>Komentar / Saran</th>
                   <th style={thStyle}>Aksi</th>
                 </tr>
               </thead>
@@ -118,7 +123,7 @@ const AdminKomentar = () => {
                       <td style={{
                         ...tdStyle,
                         maxWidth: "400px",
-                        wordWrap: "break-word",
+                        wordBreak: "break-word",
                         color: "#555"
                       }}>
                         {item.isi_komentar || "-"}
@@ -127,17 +132,7 @@ const AdminKomentar = () => {
                       <td style={tdStyle}>
                         <button
                           onClick={() => handleDelete(item.id_komentar)}
-                          style={{
-                            background: "#e53935",
-                            color: "white",
-                            border: "none",
-                            padding: "6px 12px",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                            transition: "0.2s"
-                          }}
-                          onMouseOver={e => e.target.style.opacity = "0.8"}
-                          onMouseOut={e => e.target.style.opacity = "1"}
+                          style={btnHapus}
                         >
                           Hapus
                         </button>
@@ -155,6 +150,7 @@ const AdminKomentar = () => {
   );
 };
 
+// STYLE
 const thStyle = {
   padding: "12px",
   textAlign: "left",
@@ -164,6 +160,15 @@ const thStyle = {
 const tdStyle = {
   padding: "12px",
   fontSize: "14px"
+};
+
+const btnHapus = {
+  background: "#e53935",
+  color: "white",
+  border: "none",
+  padding: "6px 12px",
+  borderRadius: "6px",
+  cursor: "pointer"
 };
 
 export default AdminKomentar;

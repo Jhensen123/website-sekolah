@@ -1,24 +1,40 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "../pages/AdminLayout";
 
+const BASE_URL = "https://website-sekolah-production-8f69.up.railway.app";
+
 const AdminBerita = () => {
 
   const [berita, setBerita] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [form, setForm] = useState({
     judul: "",
     isi: "",
     tanggal: ""
   });
 
+  // 🔥 FETCH DATA
   const fetchData = async () => {
-    const res = await fetch("http://localhost:5000/api/berita");
-    const data = await res.json();
+    try {
+      const res = await fetch(`${BASE_URL}/api/berita`);
 
-    const beritaOnly = data.filter(
-      item => item.kategori?.toLowerCase().trim() === "berita"
-    );
+      if (!res.ok) throw new Error("Gagal fetch berita");
 
-    setBerita(beritaOnly);
+      const data = await res.json();
+
+      const list = Array.isArray(data) ? data : (data.data || []);
+
+      const beritaOnly = list.filter(
+        item => item.kategori?.toLowerCase().trim() === "berita"
+      );
+
+      setBerita(beritaOnly);
+    } catch (err) {
+      console.log("ERROR:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -29,36 +45,55 @@ const AdminBerita = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // 🔥 SUBMIT
   const handleSubmit = async () => {
     if (!form.judul || !form.isi || !form.tanggal) {
       alert("Lengkapi semua data!");
       return;
     }
 
-    await fetch("http://localhost:5000/api/berita", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        judul: form.judul,
-        isi: form.isi,
-        kategori: "berita",
-        tanggal: form.tanggal
-      })
-    });
+    try {
+      const res = await fetch(`${BASE_URL}/api/berita`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          judul: form.judul,
+          isi: form.isi,
+          kategori: "berita",
+          tanggal: form.tanggal
+        })
+      });
 
-    alert("Berita berhasil ditambahkan ✅");
-    setForm({ judul: "", isi: "", tanggal: "" });
-    fetchData();
+      if (!res.ok) throw new Error("Gagal tambah berita");
+
+      alert("Berita berhasil ditambahkan ✅");
+      setForm({ judul: "", isi: "", tanggal: "" });
+
+      fetchData();
+
+    } catch (err) {
+      console.log(err);
+      alert("Gagal tambah berita ❌");
+    }
   };
 
+  // 🔥 DELETE
   const handleDelete = async (id) => {
-    await fetch(`http://localhost:5000/api/berita/${id}`, {
-      method: "DELETE"
-    });
+    try {
+      const res = await fetch(`${BASE_URL}/api/berita/${id}`, {
+        method: "DELETE"
+      });
 
-    fetchData();
+      if (!res.ok) throw new Error("Gagal hapus");
+
+      fetchData();
+
+    } catch (err) {
+      console.log(err);
+      alert("Gagal hapus ❌");
+    }
   };
 
   return (
@@ -116,65 +151,69 @@ const AdminBerita = () => {
         </div>
 
         {/* LIST */}
-        <div style={{
-          display: "grid",
-          gap: "20px"
-        }}>
-          {berita.length === 0 ? (
-            <p style={{ textAlign: "center", color: "gray" }}>
-              Belum ada berita
-            </p>
-          ) : (
-            berita.map((item) => (
-              <div key={item.id_konten} style={{
-                background: "white",
-                padding: "20px",
-                borderRadius: "12px",
-                boxShadow: "0 3px 10px rgba(0,0,0,0.08)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                gap: "20px"
-              }}>
+        {loading ? (
+          <p style={{ textAlign: "center" }}>Loading...</p>
+        ) : (
+          <div style={{
+            display: "grid",
+            gap: "20px"
+          }}>
+            {berita.length === 0 ? (
+              <p style={{ textAlign: "center", color: "gray" }}>
+                Belum ada berita
+              </p>
+            ) : (
+              berita.map((item) => (
+                <div key={item.id_konten} style={{
+                  background: "white",
+                  padding: "20px",
+                  borderRadius: "12px",
+                  boxShadow: "0 3px 10px rgba(0,0,0,0.08)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  gap: "20px"
+                }}>
 
-                <div style={{ flex: 1 }}>
-                  <h4 style={{
-                    margin: "0 0 8px",
-                    color: "#1976d2"
-                  }}>
-                    {item.judul}
-                  </h4>
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{
+                      margin: "0 0 8px",
+                      color: "#1976d2"
+                    }}>
+                      {item.judul}
+                    </h4>
 
-                  <p style={{
-                    fontSize: "12px",
-                    color: "gray",
-                    marginBottom: "10px"
-                  }}>
-                    {item.tanggal}
-                  </p>
+                    <p style={{
+                      fontSize: "12px",
+                      color: "gray",
+                      marginBottom: "10px"
+                    }}>
+                      {item.tanggal}
+                    </p>
 
-                  <p style={{
-                    fontSize: "14px",
-                    color: "#555",
-                    lineHeight: "1.5"
-                  }}>
-                    {item.isi.length > 120
-                      ? item.isi.substring(0, 120) + "..."
-                      : item.isi}
-                  </p>
+                    <p style={{
+                      fontSize: "14px",
+                      color: "#555",
+                      lineHeight: "1.5"
+                    }}>
+                      {(item.isi || "").length > 120
+                        ? item.isi.substring(0, 120) + "..."
+                        : item.isi}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => handleDelete(item.id_konten)}
+                    style={btnHapus}
+                  >
+                    Hapus
+                  </button>
+
                 </div>
-
-                <button
-                  onClick={() => handleDelete(item.id_konten)}
-                  style={btnHapus}
-                >
-                  Hapus
-                </button>
-
-              </div>
-            ))
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        )}
 
       </div>
     </AdminLayout>

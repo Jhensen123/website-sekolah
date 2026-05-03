@@ -5,6 +5,8 @@ const PPDBForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
+  const BASE_URL = "https://website-sekolah-production-8f69.up.railway.app";
+
   const [form, setForm] = useState({
     nama: "",
     tempat_lahir: "",
@@ -43,46 +45,52 @@ const PPDBForm = () => {
     return true;
   };
 
-  // 🔥 HANYA GANTI handleSubmit KAMU DENGAN INI
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  // ✅ FIX TOTAL
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!validate()) return;
+    if (!validate()) return;
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    console.log("DATA DIKIRIM:", form);
+    try {
+      const res = await fetch(`${BASE_URL}/api/ppdb`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(form)
+      });
 
-    const res = await fetch("http://localhost:5000/api/ppdb", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(form)
-    });
+      const text = await res.text();
+      let result;
 
-    const result = await res.json();
-    console.log("RESPON:", result);
+      try {
+        result = JSON.parse(text);
+      } catch {
+        result = { message: text };
+      }
 
-    if (res.ok) {
+      if (!res.ok) {
+        throw new Error(result.message || "Gagal kirim data");
+      }
+
       navigate("/ppdb/sukses", {
         state: { status: "success", data: form }
       });
-    } else {
-      alert(result.message);
+
+    } catch (err) {
+      console.log(err);
+      alert(err.message || "Gagal koneksi ❌");
+
       navigate("/ppdb/sukses", {
         state: { status: "error" }
       });
-    }
 
-  } catch (err) {
-    console.log(err);
-    alert("Gagal koneksi ❌");
-  } finally {
-    setLoading(false);
-  }
-};
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={container}>
@@ -90,7 +98,6 @@ const handleSubmit = async (e) => {
 
         <h2 style={title}>Pendaftaran Online</h2>
 
-        {/* IDENTITAS */}
         <Section title="Identitas Siswa">
           <Row>
             <Input label="Nama Lengkap" name="nama" onChange={handleChange} required />
@@ -98,12 +105,11 @@ const handleSubmit = async (e) => {
           </Row>
 
           <Row>
-            <Input label="tanggal lahir" type="date" name="tanggal_lahir" onChange={handleChange} required />
+            <Input label="Tanggal Lahir" type="date" name="tanggal_lahir" onChange={handleChange} required />
             <Select name="jenis_kelamin" onChange={handleChange} />
           </Row>
         </Section>
 
-        {/* ORANG TUA */}
         <Section title="Data Orang Tua">
           <Row>
             <Input label="Nama Ayah" name="nama_ayah" onChange={handleChange} />
@@ -114,19 +120,8 @@ const handleSubmit = async (e) => {
             <Input label="Pekerjaan Ayah" name="pekerjaan_ayah" onChange={handleChange} />
             <Input label="Pekerjaan Ibu" name="pekerjaan_ibu" onChange={handleChange} />
           </Row>
-
-          <Row>
-            <Input label="Alamat Ayah" name="alamat_ayah" onChange={handleChange} />
-            <Input label="Alamat Ibu" name="alamat_ibu" onChange={handleChange} />
-          </Row>
-
-          <Row>
-            <Input label="Agama Ayah" name="agama_ayah" onChange={handleChange} />
-            <Input label="Agama Ibu" name="agama_ibu" onChange={handleChange} />
-          </Row>
         </Section>
 
-        {/* SEKOLAH */}
         <Section title="Sekolah & Kontak">
           <Row>
             <Input label="Asal Sekolah" name="asal_sekolah" onChange={handleChange} />
@@ -134,16 +129,6 @@ const handleSubmit = async (e) => {
           </Row>
 
           <Input label="Email" name="email" onChange={handleChange} required />
-        </Section>
-
-        {/* UPLOAD (UI SAJA) */}
-        <Section title="Upload Dokumen">
-          <div style={uploadGrid}>
-            <Upload label="Akta Kelahiran" />
-            <Upload label="Kartu Keluarga" />
-            <Upload label="Ijazah TK" />
-            <Upload label="Foto 3x4" />
-          </div>
         </Section>
 
         <button type="submit" disabled={loading} style={button}>
@@ -157,8 +142,7 @@ const handleSubmit = async (e) => {
 
 export default PPDBForm;
 
-/* ================= COMPONENT ================= */
-
+/* COMPONENT */
 const Section = ({ title, children }) => (
   <div style={section}>
     <h4>{title}</h4>
@@ -188,21 +172,7 @@ const Select = ({ name, onChange }) => (
   </div>
 );
 
-const Upload = ({ label }) => (
-  <div style={{
-    border: '1px dashed #aaa',
-    padding: '15px',
-    textAlign: 'center',
-    borderRadius: '8px'
-  }}>
-    {label}
-    <br />
-    <input type="file" />
-  </div>
-);
-
-/* ================= STYLE ================= */
-
+/* STYLE */
 const container = { display: 'flex', justifyContent: 'center', padding: '40px' };
 const card = { width: '700px', padding: '30px', background: '#fff' };
 const title = { textAlign: 'center' };
@@ -210,5 +180,4 @@ const section = { marginTop: '20px', border: '1px solid #ddd', padding: '15px' }
 const row = { display: 'flex', gap: '15px' };
 const inputGroup = { flex: 1, display: 'flex', flexDirection: 'column' };
 const inputStyle = { padding: '8px' };
-const uploadGrid = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' };
 const button = { marginTop: '20px', padding: '10px', width: '100%' };

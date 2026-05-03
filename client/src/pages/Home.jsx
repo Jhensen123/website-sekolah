@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 const Home = () => {
 
-  const BASE_URL = "http://localhost:5000"; // 🔥 GANTI INI
+  const BASE_URL = "https://website-sekolah-production-8f69.up.railway.app";
 
   const scrollTo = (id) => {
     const el = document.getElementById(id);
@@ -27,25 +27,25 @@ const Home = () => {
 
   // 🔥 GET TESTIMONI
   useEffect(() => {
-    const getTestimoni = () => {
-      fetch(`${BASE_URL}/api/testimoni`)
-        .then(res => {
-          if (!res.ok) throw new Error("Gagal ambil testimoni");
-          return res.json();
-        })
-        .then(res => setTestimoni(res.data || res))
-        .catch(err => console.log(err));
-    };
+  const getTestimoni = () => {
+    fetch(`${BASE_URL}/api/testimoni`)
+      .then(res => {
+        if (!res.ok) throw new Error("Gagal ambil testimoni");
+        return res.json();
+      })
+      .then(res => setTestimoni(res.data || res))
+      .catch(err => console.log(err));
+  };
 
-    getTestimoni();
-  }, []);
+  getTestimoni();
+}, []); // 🔥 kosong saja
 
   const handleKomentarChange = (e) => {
-    setKomentar({
-      ...komentar,
-      [e.target.name]: e.target.value
-    });
-  };
+  setKomentar({
+    ...komentar,
+    [e.target.name]: e.target.value
+  });
+};
 
   // 🔥 KIRIM KOMENTAR
   const handleKomentarSubmit = (e) => {
@@ -136,14 +136,34 @@ const Home = () => {
     .catch(err => console.log("ERROR PROFIL:", err));
 
   fetch(`${BASE_URL}/api/galeri`)
-    .then(res => res.json())
-    .then(res => setGaleri(res.data || res))
-    .catch(err => console.log("ERROR GALERI:", err));
+  .then(res => res.json())
+  .then(res => {
+    console.log("GALERI:", res); // 🔥 debug
+
+    if (Array.isArray(res)) {
+      setGaleri(res);
+    } else if (Array.isArray(res.data)) {
+      setGaleri(res.data);
+    } else {
+      setGaleri([]); // 🔥 biar tidak error
+    }
+  })
+  .catch(err => console.log("ERROR GALERI:", err));
 
   fetch(`${BASE_URL}/api/berita`)
-    .then(res => res.json())
-    .then(res => setKonten(res.data || res))
-    .catch(err => console.log("ERROR BERITA:", err));
+  .then(res => res.json())
+  .then(res => {
+    console.log("KONTEN:", res); // 🔥 debug
+
+    if (Array.isArray(res)) {
+      setKonten(res);
+    } else if (Array.isArray(res.data)) {
+      setKonten(res.data);
+    } else {
+      setKonten([]); // 🔥 biar aman
+    }
+  })
+  .catch(err => console.log("ERROR BERITA:", err));
 
 }, []);
 
@@ -332,7 +352,7 @@ const Home = () => {
       Kegiatan
     </h2>
 
-    {[...konten]
+    {[...(konten || [])]
     .filter(item => item.kategori?.toLowerCase().trim() === "kegiatan")
     .sort((a, b) => (b.tanggal || "").localeCompare(a.tanggal || ""))
     .slice(0, showAllKegiatan ? 
@@ -529,7 +549,7 @@ const Home = () => {
     gap: '25px'
   }}>
 
-    {[...galeri]
+    {[...(galeri || [])]
       .sort((a, b) => (b.tanggal || "").localeCompare(a.tanggal || ""))
       .slice(0, showAllGaleri ? galeri.length : 6)
       .map((item) => (

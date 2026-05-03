@@ -1,30 +1,44 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "../pages/AdminLayout";
 
+const BASE_URL = "https://website-sekolah-production-8f69.up.railway.app";
+
 const AdminKegiatan = () => {
 
   const [kegiatan, setKegiatan] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [form, setForm] = useState({
     judul: "",
     deskripsi: "",
-    tanggal: "" // ✅ TAMBAH
+    tanggal: ""
   });
 
   const [file, setFile] = useState(null);
 
-  // 🔥 FETCH DATA
+  // 🔥 FETCH DATA (FIX)
   const fetchData = async () => {
+    setLoading(true);
+
     try {
-      const res = await fetch("http://localhost:5000/api/berita");
+      const res = await fetch(`${BASE_URL}/api/berita`);
+
+      if (!res.ok) throw new Error("Gagal fetch kegiatan");
+
       const data = await res.json();
 
-      const kegiatanOnly = data.filter(
+      const list = Array.isArray(data) ? data : (data.data || []);
+
+      const kegiatanOnly = list.filter(
         item => item.kategori?.toLowerCase().trim() === "kegiatan"
       );
 
       setKegiatan(kegiatanOnly);
+
     } catch (err) {
-      console.log(err);
+      console.log("ERROR:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -42,7 +56,7 @@ const AdminKegiatan = () => {
     setFile(e.target.files[0]);
   };
 
-  // 🔥 SUBMIT
+  // 🔥 SUBMIT (FIX)
   const handleSubmit = async () => {
     if (!form.judul || !form.deskripsi || !form.tanggal) {
       alert("Semua field wajib diisi!");
@@ -53,14 +67,14 @@ const AdminKegiatan = () => {
     formData.append("judul", form.judul);
     formData.append("isi", form.deskripsi);
     formData.append("kategori", "kegiatan");
-    formData.append("tanggal", form.tanggal); // ✅ KIRIM TANGGAL
+    formData.append("tanggal", form.tanggal);
 
     if (file) {
       formData.append("gambar", file);
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/berita", {
+      const res = await fetch(`${BASE_URL}/api/berita`, {
         method: "POST",
         body: formData
       });
@@ -76,7 +90,6 @@ const AdminKegiatan = () => {
 
       fetchData();
 
-      // RESET FORM
       setForm({
         judul: "",
         deskripsi: "",
@@ -91,15 +104,17 @@ const AdminKegiatan = () => {
     }
   };
 
-  // 🔥 DELETE
+  // 🔥 DELETE (FIX)
   const handleDelete = async (id_konten) => {
     if (!window.confirm("Yakin mau hapus?")) return;
 
     try {
-      await fetch(
-        `http://localhost:5000/api/berita/${id_konten}`,
+      const res = await fetch(
+        `${BASE_URL}/api/berita/${id_konten}`,
         { method: "DELETE" }
       );
+
+      if (!res.ok) throw new Error("Gagal hapus");
 
       alert("Data berhasil dihapus ✅");
       fetchData();
@@ -138,7 +153,6 @@ const AdminKegiatan = () => {
           style={{ width: "100%", padding: "10px", marginBottom: "10px" }}
         />
 
-        {/* ✅ INPUT TANGGAL */}
         <input
           type="date"
           name="tanggal"
@@ -166,27 +180,16 @@ const AdminKegiatan = () => {
         </button>
       </div>
 
-      {/* TABEL */}
+      {/* LIST */}
       <div style={{
         background: "white",
         padding: "20px",
         borderRadius: "10px"
       }}>
 
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 2fr 1fr 2fr 1fr",
-          fontWeight: "bold",
-          marginBottom: "10px"
-        }}>
-          <div>Foto</div>
-          <div>Judul</div>
-          <div>Tanggal</div>
-          <div>Deskripsi</div>
-          <div>Aksi</div>
-        </div>
-
-        {kegiatan.length === 0 ? (
+        {loading ? (
+          <p>Loading...</p>
+        ) : kegiatan.length === 0 ? (
           <p>Tidak ada data kegiatan</p>
         ) : (
           kegiatan.map((item) => (
@@ -204,7 +207,7 @@ const AdminKegiatan = () => {
               <img
                 src={
                   item.gambar
-                    ? `http://localhost:5000/uploads/${item.gambar}`
+                    ? `${BASE_URL}/uploads/${item.gambar}`
                     : "/images/bg1.jpeg"
                 }
                 alt=""

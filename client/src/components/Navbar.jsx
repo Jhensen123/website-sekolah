@@ -2,40 +2,32 @@ import React from 'react';
 import { Button } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const Navbar = ({ onAdminClick }) => {
+const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // 🔥 HANDLE SCROLL + NAVIGATE
   const handleScroll = (id) => {
     if (location.pathname === '/') {
-      // kalau di home → langsung scroll
       const el = document.getElementById(id);
       el?.scrollIntoView({ behavior: 'smooth' });
     } else {
-      // kalau di halaman lain → pindah ke home dulu
       navigate('/', { state: { scrollTo: id } });
     }
   };
 
+  // 🔥 STYLE ACTIVE MENU
+  const isActive = (path) => location.pathname === path;
+
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '15px 30px',
-      background: '#1976d2',
-      color: 'white',
-      position: 'sticky',
-      top: 0,
-      zIndex: 1000
-    }}>
+    <div style={container}>
 
       {/* LOGO */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div style={logoWrapper}>
         <img 
           src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Tut_Wuri_Handayani.png"
           style={{ height: '50px' }}
-          alt=""
+          alt="logo"
         />
         <div>
           <h2 style={{ margin: 0 }}>SD NEGERI 103 MANADO</h2>
@@ -46,18 +38,40 @@ const Navbar = ({ onAdminClick }) => {
       </div>
 
       {/* MENU */}
-      <div style={{ display: 'flex', gap: '10px' }}>
+      <div style={menu}>
         
         <Button onClick={() => handleScroll('home')} color="inherit">Home</Button>
-        <Button onClick={() => handleScroll('profil')} color="inherit">Profil Sekolah</Button>
-        <Button onClick={() => handleScroll('kegiatanBerita')} color="inherit">Kegiatan&Berita</Button>
-        <Button onClick={() => handleScroll('galeri')} color="inherit">Galeri</Button>
 
-        {/* PPDB tetap pindah halaman */}
-        <Button onClick={() => navigate('/ppdb')} color="inherit">PPDB</Button>
+        <Button onClick={() => handleScroll('profil')} color="inherit">
+          Profil
+        </Button>
 
-        <Button onClick={() => handleScroll('komentar')} color="inherit">Komentar&Saran</Button>
-        <Button onClick={() => handleScroll('testimoni')} color="inherit">Testimoni</Button>
+        <Button onClick={() => handleScroll('kegiatanBerita')} color="inherit">
+          Kegiatan & Berita
+        </Button>
+
+        <Button onClick={() => handleScroll('galeri')} color="inherit">
+          Galeri
+        </Button>
+
+        {/* 🔥 PPDB */}
+        <Button
+          onClick={() => navigate('/ppdb')}
+          color="inherit"
+          style={{
+            borderBottom: isActive('/ppdb') ? '2px solid white' : 'none'
+          }}
+        >
+          PPDB
+        </Button>
+
+        <Button onClick={() => handleScroll('komentar')} color="inherit">
+          Komentar
+        </Button>
+
+        <Button onClick={() => handleScroll('testimoni')} color="inherit">
+          Testimoni
+        </Button>
 
       </div>
     </div>
@@ -65,3 +79,29 @@ const Navbar = ({ onAdminClick }) => {
 };
 
 export default Navbar;
+
+/* ================= STYLE ================= */
+
+const container = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: '15px 30px',
+  background: '#1976d2',
+  color: 'white',
+  position: 'sticky',
+  top: 0,
+  zIndex: 1000
+};
+
+const logoWrapper = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px'
+};
+
+const menu = {
+  display: 'flex',
+  gap: '10px',
+  flexWrap: 'wrap'
+};

@@ -2,25 +2,36 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db");
 const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
 
-// STORAGE
+// ===== PATH UPLOAD =====
+const uploadPath = path.join(__dirname, "../uploads");
+
+// AUTO CREATE FOLDER
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath, { recursive: true });
+}
+
+// ===== STORAGE =====
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
+    const safeName = Date.now() + "-" + file.originalname.replace(/\s/g, "_");
+    cb(null, safeName);
   }
 });
 
 const upload = multer({ storage });
 
-// 🔥 VALIDASI FORMAT TANGGAL
+// ===== VALIDASI TANGGAL =====
 const isValidDate = (date) => {
   return /^\d{4}-\d{2}-\d{2}$/.test(date);
 };
 
-// GET
+// ===== GET GALERI =====
 router.get("/", (req, res) => {
   db.query(
     `SELECT 
@@ -33,30 +44,36 @@ router.get("/", (req, res) => {
     (err, result) => {
       if (err) {
         console.log("GET ERROR:", err);
-        return res.json(err);
+        return res.status(500).json({
+          success: false,
+          message: "Gagal ambil data galeri"
+        });
       }
-      res.json(result);
+
+      res.json({
+        success: true,
+        data: result || []
+      });
     }
   );
 });
 
-// 🔥 POST FIX TOTAL
+// ===== POST GALERI =====
 router.post("/", upload.single("file_foto"), (req, res) => {
   const judul = req.body.judul_foto;
   const tanggal = req.body.tanggal;
   const file = req.file ? req.file.filename : null;
 
-  console.log("RAW BODY:", req.body);
-
-  // VALIDASI
   if (!judul || !file || !tanggal) {
     return res.status(400).json({
+      success: false,
       message: "Data tidak lengkap"
     });
   }
 
   if (!isValidDate(tanggal)) {
     return res.status(400).json({
+      success: false,
       message: "Format tanggal harus YYYY-MM-DD"
     });
   }
@@ -67,33 +84,42 @@ router.post("/", upload.single("file_foto"), (req, res) => {
     (err, result) => {
       if (err) {
         console.log("ERROR DB:", err);
-        return res.status(500).json(err);
+        return res.status(500).json({
+          success: false,
+          message: "Gagal tambah galeri"
+        });
       }
 
       res.json({
-        message: "Berhasil tambah",
-        insertId: result.insertId
+        success: true,
+        message: "Galeri berhasil ditambahkan",
+        id: result.insertId
       });
     }
   );
 });
 
-// 🔥 UPDATE FIX TOTAL
+// ===== UPDATE GALERI =====
 router.put("/:id", upload.single("file_foto"), (req, res) => {
   const judul = req.body.judul_foto;
   const tanggal = req.body.tanggal;
   const file = req.file?.filename;
 
-  console.log("UPDATE BODY:", req.body);
-
   if (!judul || !tanggal) {
-    return res.json({ message: "Data tidak lengkap" });
+    return res.status(400).json({
+      success: false,
+      message: "Data tidak lengkap"
+    });
   }
 
   if (!isValidDate(tanggal)) {
-    return res.json({ message: "Format tanggal salah" });
+    return res.status(400).json({
+      success: false,
+      message: "Format tanggal salah"
+    });
   }
 
+  // TANPA GANTI GAMBAR
   if (!file) {
     db.query(
       "UPDATE galeri SET judul_foto=?, tanggal=? WHERE id_galeri=?",
@@ -101,27 +127,43 @@ router.put("/:id", upload.single("file_foto"), (req, res) => {
       (err) => {
         if (err) {
           console.log("UPDATE ERROR:", err);
-          return res.json(err);
+          return res.status(500).json({
+            success: false,
+            message: "Gagal update galeri"
+          });
         }
-        res.json({ message: "Galeri diupdate" });
+
+        res.json({
+          success: true,
+          message: "Galeri berhasil diupdate"
+        });
       }
     );
-  } else {
+  } 
+  // DENGAN GANTI GAMBAR
+  else {
     db.query(
       "UPDATE galeri SET judul_foto=?, file_foto=?, tanggal=? WHERE id_galeri=?",
       [judul, file, tanggal, req.params.id],
       (err) => {
         if (err) {
           console.log("UPDATE ERROR:", err);
-          return res.json(err);
+          return res.status(500).json({
+            success: false,
+            message: "Gagal update galeri"
+          });
         }
-        res.json({ message: "Galeri diupdate" });
+
+        res.json({
+          success: true,
+          message: "Galeri berhasil diupdate"
+        });
       }
     );
   }
 });
 
-// DELETE
+// ===== DELETE GALERI =====
 router.delete("/:id", (req, res) => {
   db.query(
     "DELETE FROM galeri WHERE id_galeri=?",
@@ -129,9 +171,16 @@ router.delete("/:id", (req, res) => {
     (err) => {
       if (err) {
         console.log("DELETE ERROR:", err);
-        return res.json(err);
+        return res.status(500).json({
+          success: false,
+          message: "Gagal hapus galeri"
+        });
       }
-      res.json({ message: "Dihapus" });
+
+      res.json({
+        success: true,
+        message: "Galeri berhasil dihapus"
+      });
     }
   );
 });
