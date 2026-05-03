@@ -5,7 +5,9 @@ const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 
-// ===== PATH UPLOAD =====
+// =====================
+// 🔥 PATH UPLOAD
+// =====================
 const uploadPath = path.join(__dirname, "../uploads");
 
 // AUTO CREATE FOLDER (WAJIB UNTUK RAILWAY)
@@ -13,7 +15,9 @@ if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath, { recursive: true });
 }
 
-// ===== MULTER =====
+// =====================
+// 🔥 MULTER CONFIG
+// =====================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadPath);
@@ -26,13 +30,15 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ===== VALIDASI TANGGAL =====
+// =====================
+// 🔥 VALIDASI TANGGAL
+// =====================
 const isValidDate = (date) => {
   return /^\d{4}-\d{2}-\d{2}$/.test(date);
 };
 
 // =====================
-// GET (URUT TERBARU)
+// 🔥 GET DATA
 // =====================
 router.get("/", (req, res) => {
   const sql = `
@@ -42,10 +48,12 @@ router.get("/", (req, res) => {
 
   db.query(sql, (err, result) => {
     if (err) {
-      console.error("GET ERROR:", err);
+      console.error("❌ GET ERROR:", err.message);
+
       return res.status(500).json({
         success: false,
-        message: "Gagal mengambil data"
+        message: "Database error",
+        error: err.message // 🔥 biar keliatan di response
       });
     }
 
@@ -57,7 +65,7 @@ router.get("/", (req, res) => {
 });
 
 // =====================
-// POST
+// 🔥 POST DATA
 // =====================
 router.post("/", upload.single("gambar"), (req, res) => {
   let { judul, isi, kategori, tanggal } = req.body;
@@ -77,7 +85,7 @@ router.post("/", upload.single("gambar"), (req, res) => {
   }
 
   kategori = kategori.toLowerCase();
-  const gambar = req.file ? req.file.filename : "";
+  const gambar = req.file ? req.file.filename : null;
 
   const sql = `
     INSERT INTO berita_dan_kegiatan 
@@ -87,10 +95,12 @@ router.post("/", upload.single("gambar"), (req, res) => {
 
   db.query(sql, [judul, isi, gambar, kategori, tanggal], (err, result) => {
     if (err) {
-      console.error("INSERT ERROR:", err);
+      console.error("❌ INSERT ERROR:", err.message);
+
       return res.status(500).json({
         success: false,
-        message: "Gagal tambah data"
+        message: "Gagal tambah data",
+        error: err.message
       });
     }
 
@@ -103,29 +113,29 @@ router.post("/", upload.single("gambar"), (req, res) => {
 });
 
 // =====================
-// DELETE
+// 🔥 DELETE DATA
 // =====================
 router.delete("/:id", (req, res) => {
   const id = req.params.id;
 
-  db.query(
-    "DELETE FROM berita_dan_kegiatan WHERE id_konten = ?",
-    [id],
-    (err) => {
-      if (err) {
-        console.error("DELETE ERROR:", err);
-        return res.status(500).json({
-          success: false,
-          message: "Gagal hapus"
-        });
-      }
+  const sql = "DELETE FROM berita_dan_kegiatan WHERE id_konten = ?";
 
-      res.json({
-        success: true,
-        message: "Berhasil dihapus"
+  db.query(sql, [id], (err) => {
+    if (err) {
+      console.error("❌ DELETE ERROR:", err.message);
+
+      return res.status(500).json({
+        success: false,
+        message: "Gagal hapus",
+        error: err.message
       });
     }
-  );
+
+    res.json({
+      success: true,
+      message: "Berhasil dihapus"
+    });
+  });
 });
 
 module.exports = router;
