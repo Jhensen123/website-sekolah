@@ -1,10 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../db");
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-// 🔐 SECRET KEY (WAJIB ADA DI ENV)
 const JWT_SECRET = process.env.JWT_SECRET || "secret123";
 
 // =======================
@@ -13,7 +11,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "secret123";
 router.post("/login", (req, res) => {
   const { username, password } = req.body;
 
-  // VALIDASI
+  // 🔥 VALIDASI INPUT
   if (!username || !password) {
     return res.status(400).json({
       success: false,
@@ -23,15 +21,16 @@ router.post("/login", (req, res) => {
 
   const sql = "SELECT * FROM admin WHERE username = ?";
 
-  db.query(sql, [username], async (err, result) => {
+  db.query(sql, [username], (err, result) => {
     if (err) {
-      console.log("DB ERROR:", err);
+      console.error("DB ERROR:", err);
       return res.status(500).json({
         success: false,
         message: "Server error"
       });
     }
 
+    // 🔥 USER TIDAK DITEMUKAN
     if (!result || result.length === 0) {
       return res.status(401).json({
         success: false,
@@ -41,10 +40,12 @@ router.post("/login", (req, res) => {
 
     const admin = result[0];
 
-    // 🔥 CEK PASSWORD HASH
-    const isMatch = await bcrypt.compare(password, admin.password);
+    // 🔥 NORMALISASI (hindari error spasi / case)
+    const inputPassword = String(password).trim();
+    const dbPassword = String(admin.password).trim();
 
-    if (!isMatch) {
+    // 🔥 CEK PASSWORD
+    if (inputPassword !== dbPassword) {
       return res.status(401).json({
         success: false,
         message: "Password salah"
@@ -61,10 +62,11 @@ router.post("/login", (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.json({
+    // 🔥 RESPONSE FINAL (rapi & konsisten)
+    return res.status(200).json({
       success: true,
       message: "Login berhasil",
-      token: token,
+      token,
       data: {
         id_admin: admin.id_admin,
         username: admin.username

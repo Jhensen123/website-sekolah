@@ -9,16 +9,26 @@ const app = express();
 // =====================
 const PORT = process.env.PORT || 5000;
 
-// 🔥 DOMAIN FRONTEND (UNTUK CORS)
+// 🔥 DOMAIN FRONTEND
 const FRONTEND_URL = process.env.FRONTEND_URL || "*";
 
 // =====================
 // 🔥 MIDDLEWARE
 // =====================
 
-// CORS
+// 🔥 FIX CORS (AMAN + SUPPORT VERCEL)
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: (origin, callback) => {
+    // izinkan tanpa origin (postman / mobile)
+    if (!origin) return callback(null, true);
+
+    // jika wildcard atau sama dengan frontend
+    if (FRONTEND_URL === "*" || origin.includes("vercel.app")) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
   credentials: true
 }));
 
@@ -30,6 +40,14 @@ app.use(express.urlencoded({ extended: true }));
 // 🔥 STATIC FILE (UPLOAD)
 // =====================
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// =====================
+// 🔥 LOG REQUEST (DEBUG)
+// =====================
+app.use((req, res, next) => {
+  console.log(`➡️ ${req.method} ${req.url}`);
+  next();
+});
 
 // =====================
 // 🔥 HEALTH CHECK
@@ -47,7 +65,7 @@ app.use("/api/profil", require("./routes/profil"));
 // 🔥 BERITA + KEGIATAN (SATU SUMBER)
 const beritaRoutes = require("./routes/berita");
 app.use("/api/berita", beritaRoutes);
-app.use("/api/kegiatan", beritaRoutes); // ✅ TAMBAHAN
+app.use("/api/kegiatan", beritaRoutes);
 
 app.use("/api/galeri", require("./routes/galeri"));
 app.use("/api/komentar", require("./routes/komentar"));
@@ -59,6 +77,7 @@ app.use("/api/testimoni", require("./routes/testimoni"));
 // =====================
 app.use((req, res) => {
   res.status(404).json({
+    success: false,
     message: "Route tidak ditemukan"
   });
 });
@@ -70,6 +89,7 @@ app.use((err, req, res, next) => {
   console.error("SERVER ERROR:", err);
 
   res.status(500).json({
+    success: false,
     message: "Internal Server Error",
     error: process.env.NODE_ENV === "development" ? err.message : undefined
   });

@@ -38,22 +38,18 @@ const AdminLogin = () => {
         body: JSON.stringify(form)
       });
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text);
-      }
-
+      // 🔥 HANDLE ERROR DENGAN BENAR
       const data = await res.json();
 
-      if (data.success) {
-        // 🔥 FIX UTAMA (WAJIB SAMA DENGAN ProtectedRoute)
-        localStorage.setItem("adminLogin", "true");
+      if (!res.ok) {
+        throw new Error(data.message || "Login gagal");
+      }
 
-        // 🔥 SIMPAN DATA ADMIN (opsional)
-        localStorage.setItem("adminData", JSON.stringify(data.admin || data.user));
+      if (data.success) {
+        localStorage.setItem("adminLogin", "true");
+        localStorage.setItem("adminData", JSON.stringify(data.data));
 
         alert("Login berhasil ✅");
-
         navigate("/admin/dashboard");
       } else {
         alert(data.message || "Login gagal ❌");
@@ -61,7 +57,9 @@ const AdminLogin = () => {
 
     } catch (err) {
       console.log("LOGIN ERROR:", err);
-      alert("Server error ❌");
+
+      // 🔥 ERROR JELAS
+      alert(err.message || "Server error ❌");
     } finally {
       setLoading(false);
     }
@@ -69,7 +67,6 @@ const AdminLogin = () => {
 
   return (
     <div style={container}>
-
       <div style={card}>
 
         <img 
@@ -107,15 +104,13 @@ const AdminLogin = () => {
         </button>
 
       </div>
-
     </div>
   );
 };
 
 export default AdminLogin;
 
-/* ===== STYLE ===== */
-
+/* STYLE */
 const container = {
   height: '100vh',
   background: '#3b5998',
