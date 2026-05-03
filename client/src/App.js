@@ -27,17 +27,31 @@ import AdminPenerimaan from './pages/AdminPenerimaan';
 import AdminTestimoni from "./pages/AdminTestimoni";
 import AdminKomentar from "./pages/AdminKomentar";
 
+
 // =======================
 // 🔥 PROTECT ADMIN ROUTE
 // =======================
 const ProtectedRoute = ({ children }) => {
-  const isLogin = localStorage.getItem("adminLogin");
+  const isLogin = localStorage.getItem("adminLogin") === "true";
 
   if (!isLogin) {
     return <Navigate to="/admin" replace />;
   }
 
   return children;
+};
+
+// =======================
+// 🔥 CEK LOGIN (BIAR GA BALIK KE LOGIN)
+// =======================
+const AdminLoginRoute = () => {
+  const isLogin = localStorage.getItem("adminLogin") === "true";
+
+  if (isLogin) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
+  return <AdminLogin />;
 };
 
 // =======================
@@ -72,7 +86,7 @@ function App() {
           <Route path="/ppdb/cek" element={<PPDBCek />} />
 
           {/* ================= ADMIN LOGIN ================= */}
-          <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminLoginRoute />} />
 
           {/* ================= ADMIN PROTECTED ================= */}
           <Route path="/admin/dashboard" element={
@@ -124,7 +138,11 @@ function App() {
           } />
 
           {/* ================= 404 ================= */}
-          <Route path="*" element={<h2 style={{ textAlign: "center" }}>404 - Halaman tidak ditemukan</h2>} />
+          <Route path="*" element={
+            <h2 style={{ textAlign: "center" }}>
+              404 - Halaman tidak ditemukan
+            </h2>
+          } />
 
         </Routes>
       </Layout>
