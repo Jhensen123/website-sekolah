@@ -42,13 +42,6 @@ const Home = () => {
   getTestimoni();
 }, []); // 🔥 kosong saja
 
-  const handleKomentarChange = (e) => {
-  setKomentar({
-    ...komentar,
-    [e.target.name]: e.target.value
-  });
-};
-
   // 🔥 KIRIM KOMENTAR
   const handleKomentarSubmit = (e) => {
     e.preventDefault();
@@ -81,7 +74,7 @@ const Home = () => {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [images.length]);
 
   // 🔥 STATE
   const [form, setForm] = useState({
