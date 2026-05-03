@@ -9,14 +9,14 @@ const app = express();
 // =====================
 const PORT = process.env.PORT || 5000;
 
-// 🔥 GANTI DOMAIN FRONTEND KAMU SAAT DEPLOY
+// 🔥 DOMAIN FRONTEND (UNTUK CORS)
 const FRONTEND_URL = process.env.FRONTEND_URL || "*";
 
 // =====================
 // 🔥 MIDDLEWARE
 // =====================
 
-// CORS (lebih aman)
+// CORS
 app.use(cors({
   origin: FRONTEND_URL,
   credentials: true
@@ -43,7 +43,12 @@ app.get("/", (req, res) => {
 // =====================
 app.use("/api/ppdb", require("./routes/ppdb"));
 app.use("/api/profil", require("./routes/profil"));
-app.use("/api/berita", require("./routes/berita"));
+
+// 🔥 BERITA + KEGIATAN (SATU SUMBER)
+const beritaRoutes = require("./routes/berita");
+app.use("/api/berita", beritaRoutes);
+app.use("/api/kegiatan", beritaRoutes); // ✅ TAMBAHAN
+
 app.use("/api/galeri", require("./routes/galeri"));
 app.use("/api/komentar", require("./routes/komentar"));
 app.use("/api/admin", require("./routes/admin"));
