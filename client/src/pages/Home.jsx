@@ -20,6 +20,8 @@ const Home = () => {
 
   const [currentImage, setCurrentImage] = useState(0);
 
+  const [testimoni, setTestimoni] = useState([]);
+
   const [komentar, setKomentar] = useState({
     nama_pengirim: "",
     isi_komentar: ""
@@ -82,7 +84,6 @@ const Home = () => {
   }, []);
 
   // 🔥 STATE
-  const [testimoni, setTestimoni] = useState([]);
   const [form, setForm] = useState({
     nama: "",
     isi_testimoni: ""
@@ -479,7 +480,7 @@ const Home = () => {
 
         {konten
         .filter(item => item.kategori?.toLowerCase().trim() === "berita")
-        .sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal))
+        .sort((a, b) => new Date(b.tanggal || 0) - new Date(a.tanggal || 0))
         .slice(0, 4)
         .map((item, index) => (
         <div key={item.id_konten || index}style={{
@@ -500,7 +501,10 @@ const Home = () => {
               padding: '3px 8px',
               borderRadius: '10px'
             }}>
-              {new Date(item.tanggal + "T00:00:00").toLocaleDateString("id-ID")}
+              {item.tanggal 
+              ? new Date(item.tanggal + "T00:00:00").toLocaleDateString("id-ID")
+                : "-"
+              }
             </span>
 
             <h4 style={{ marginTop: '10px', color: '#1976d2' }}>
