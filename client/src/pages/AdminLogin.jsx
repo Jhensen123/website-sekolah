@@ -38,7 +38,6 @@ const AdminLogin = () => {
         body: JSON.stringify(form)
       });
 
-      // 🔥 HANDLE ERROR DENGAN BENAR
       const data = await res.json();
 
       if (!res.ok) {
@@ -57,8 +56,6 @@ const AdminLogin = () => {
 
     } catch (err) {
       console.log("LOGIN ERROR:", err);
-
-      // 🔥 ERROR JELAS
       alert(err.message || "Server error ❌");
     } finally {
       setLoading(false);
@@ -75,25 +72,31 @@ const AdminLogin = () => {
           style={logo}
         />
 
-        <h2>Login Admin</h2>
-        <p>Selamat datang di SD Negeri 103 Manado</p>
+        <h2 style={title}>Login Admin</h2>
+        <p style={subtitle}>SD Negeri 103 Manado</p>
 
-        <input
-          name="username"
-          placeholder="Username"
-          value={form.username}
-          onChange={handleChange}
-          style={input}
-        />
+        <div style={inputGroup}>
+          <label style={label}>Username</label>
+          <input
+            name="username"
+            placeholder="Masukkan username"
+            value={form.username}
+            onChange={handleChange}
+            style={input}
+          />
+        </div>
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          style={input}
-        />
+        <div style={inputGroup}>
+          <label style={label}>Password</label>
+          <input
+            type="password"
+            name="password"
+            placeholder="Masukkan password"
+            value={form.password}
+            onChange={handleChange}
+            style={input}
+          />
+        </div>
 
         <button
           onClick={handleLogin}
@@ -110,44 +113,71 @@ const AdminLogin = () => {
 
 export default AdminLogin;
 
-/* STYLE */
+/* ===== STYLE ===== */
+
 const container = {
   height: '100vh',
-  background: '#3b5998',
+  background: 'linear-gradient(135deg, #1976d2, #0d47a1)',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center'
 };
 
 const card = {
-  background: '#2f5597',
+  background: 'white',
   padding: '40px',
-  borderRadius: '10px',
-  color: 'white',
+  borderRadius: '15px',
   textAlign: 'center',
-  width: '350px'
+  width: '360px',
+  boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
 };
 
 const logo = {
-  width: '80px',
+  width: '70px',
   marginBottom: '10px'
+};
+
+const title = {
+  margin: '10px 0 5px',
+  color: '#1976d2'
+};
+
+const subtitle = {
+  fontSize: '13px',
+  color: 'gray',
+  marginBottom: '20px'
+};
+
+const inputGroup = {
+  textAlign: 'left',
+  marginBottom: '15px'
+};
+
+const label = {
+  fontSize: '12px',
+  fontWeight: 'bold',
+  color: '#555'
 };
 
 const input = {
   width: '100%',
   padding: '10px',
-  marginTop: '10px',
-  borderRadius: '5px',
-  border: 'none'
+  marginTop: '5px',
+  borderRadius: '8px',
+  border: '1px solid #ccc',
+  outline: 'none',
+  boxSizing: 'border-box'
 };
 
 const button = {
   marginTop: '20px',
-  padding: '10px',
+  padding: '12px',
   width: '100%',
-  borderRadius: '20px',
-  border: '1px solid white',
-  background: 'transparent',
+  borderRadius: '8px',
+  border: 'none',
+  background: '#1976d2',
   color: 'white',
-  cursor: 'pointer'
+  fontWeight: 'bold',
+  cursor: 'pointer',
+  transition: '0.3s'
 };
