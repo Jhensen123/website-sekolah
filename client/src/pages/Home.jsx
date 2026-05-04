@@ -105,23 +105,29 @@ const Home = () => {
   // 🔥 KIRIM TESTIMONI
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    fetch(`${BASE_URL}/api/testimoni`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(form)
-    })
-      .then(res => {
-        if (!res.ok) throw new Error("Gagal kirim testimoni");
-      })
-      .then(() => {
-        alert("Testimoni dikirim, menunggu persetujuan admin");
-        setForm({ nama: "", isi_testimoni: "" });
-      })
-      .catch(() => alert("Gagal kirim"));
-  };
+fetch(`${BASE_URL}/api/testimoni`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify(form)
+})
+  .then(res => {
+    if (!res.ok) throw new Error("Gagal kirim testimoni");
+    return res.json(); // 🔥 TAMBAH INI
+  })
+  .then((data) => {
+    if (data.success) {
+      alert("Testimoni dikirim, menunggu persetujuan admin ✅");
+      setForm({ nama: "", isi_testimoni: "" });
+    } else {
+      throw new Error(data.message);
+    }
+  })
+  .catch((err) => {
+    console.log(err);
+    alert(err.message || "Gagal kirim ❌");
+  });
 
  useEffect(() => {
   fetch(`${BASE_URL}/api/profil`)
@@ -863,6 +869,7 @@ const Home = () => {
   </div> {/* tutup section testimoni */}
 </div>
   );
+};
 };
 
 export default Home;

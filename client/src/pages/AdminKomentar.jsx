@@ -7,25 +7,32 @@ const AdminKomentar = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 FETCH DATA (FIX)
+  // 🔥 FETCH DATA FIX TOTAL
   const fetchData = async () => {
-    setLoading(true);
-
     try {
+      setLoading(true);
+
       const res = await fetch(`${BASE_URL}/api/komentar`);
-
-      if (!res.ok) throw new Error("Gagal fetch komentar");
-
       const result = await res.json();
 
-      const list = Array.isArray(result) ? result : (result.data || []);
+      console.log("API KOMENTAR:", result); // 🔥 DEBUG
 
-      console.log("DATA API:", list);
+      if (!res.ok) {
+        throw new Error(result.message || "Gagal fetch komentar");
+      }
 
-      setData(list);
+      // 🔥 FIX PALING PENTING
+      if (result.success) {
+        setData(Array.isArray(result.data) ? result.data : []);
+      } else {
+        setData([]);
+        console.warn("API gagal:", result.message);
+      }
 
     } catch (err) {
       console.log("Error fetch komentar:", err);
+      alert("Gagal ambil komentar ❌");
+      setData([]);
     } finally {
       setLoading(false);
     }
@@ -35,23 +42,27 @@ const AdminKomentar = () => {
     fetchData();
   }, []);
 
-  // 🔥 DELETE (FIX)
+  // 🔥 DELETE FIX
   const handleDelete = async (id) => {
     if (!window.confirm("Yakin ingin menghapus komentar ini?")) return;
 
     try {
-      const res = await fetch(
-        `${BASE_URL}/api/komentar/${id}`,
-        { method: "DELETE" }
-      );
+      const res = await fetch(`${BASE_URL}/api/komentar/${id}`, {
+        method: "DELETE"
+      });
 
-      if (!res.ok) throw new Error("Delete gagal");
+      const result = await res.json();
 
+      if (!res.ok || !result.success) {
+        throw new Error(result.message || "Gagal hapus");
+      }
+
+      alert("Berhasil dihapus ✅");
       fetchData();
 
     } catch (err) {
       console.log(err);
-      alert("Gagal menghapus komentar");
+      alert("Gagal menghapus komentar ❌");
     }
   };
 

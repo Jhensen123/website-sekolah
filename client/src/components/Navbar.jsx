@@ -24,11 +24,6 @@ const Navbar = () => {
 
       {/* LOGO */}
       <div style={logoWrapper}>
-        <img 
-          src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Tut_Wuri_Handayani.png"
-          style={{ height: '50px' }}
-          alt="logo"
-        />
         <div>
           <h2 style={{ margin: 0 }}>SD NEGERI 103 MANADO</h2>
           <p style={{ margin: 0, fontSize: '12px' }}>

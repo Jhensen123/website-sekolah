@@ -16,7 +16,7 @@ const AdminGaleri = () => {
 
   const [editId, setEditId] = useState(null);
 
-  // 🔥 GET DATA
+  // 🔥 GET DATA FIX
   const getData = async () => {
     try {
       setLoading(true);
@@ -26,7 +26,14 @@ const AdminGaleri = () => {
 
       if (!res.ok) throw new Error(data.message || "Gagal ambil data");
 
-      setGaleri(Array.isArray(data.data) ? data.data : []);
+      // 🔥 FIX FLEXIBLE RESPONSE
+      if (Array.isArray(data)) {
+        setGaleri(data);
+      } else if (Array.isArray(data.data)) {
+        setGaleri(data.data);
+      } else {
+        setGaleri([]);
+      }
 
     } catch (err) {
       console.log("ERROR GET:", err);
@@ -63,11 +70,14 @@ const AdminGaleri = () => {
 
     try {
       const formData = new FormData();
+
       formData.append("judul_foto", form.judul);
       formData.append("tanggal", form.tanggal);
 
       if (form.foto) {
+        // 🔥 FIX PENTING (DOUBLE FIELD BIAR AMAN)
         formData.append("file_foto", form.foto);
+        formData.append("foto", form.foto);
       }
 
       const url = editId
@@ -82,12 +92,12 @@ const AdminGaleri = () => {
       });
 
       const data = await res.json();
+      console.log("UPLOAD RESPONSE:", data); // 🔥 DEBUG
 
       if (!res.ok) throw new Error(data.message || "Gagal simpan");
 
       alert(data.message || "Berhasil ✅");
 
-      // reset form
       setForm({
         judul: "",
         tanggal: "",
@@ -162,10 +172,7 @@ const AdminGaleri = () => {
           style={{ width: "100%", padding: "10px", marginBottom: "10px" }}
         />
 
-        <input
-          type="file"
-          onChange={handleFoto}
-        />
+        <input type="file" onChange={handleFoto} />
 
         <br /><br />
 
@@ -204,7 +211,11 @@ const AdminGaleri = () => {
               }}>
 
                 <img
-                  src={`${BASE_URL}/uploads/${item.file_foto}`}
+                  src={
+                    item.file_foto
+                      ? `${BASE_URL}/uploads/${item.file_foto}`
+                      : "/images/bg1.jpeg" // 🔥 fallback biar ga putih
+                  }
                   alt=""
                   style={{
                     width: "100%",
