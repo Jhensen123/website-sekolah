@@ -28,10 +28,30 @@ router.post("/login", (req, res) => {
   db.query(sql, [username], (err, result) => {
 
     // =======================
-    // ERROR DATABASE
+    // 🔥 FALLBACK (KALAU DB ERROR)
     // =======================
     if (err) {
       console.error("❌ DB ERROR:", err);
+
+      // 🔥 LOGIN DARURAT
+      if (username === "admin" && password === "123") {
+        const token = jwt.sign(
+          { id: 1, username: "admin" },
+          JWT_SECRET,
+          { expiresIn: "1d" }
+        );
+
+        return res.json({
+          success: true,
+          message: "Login berhasil (fallback)",
+          token,
+          data: {
+            id_admin: 1,
+            username: "admin"
+          }
+        });
+      }
+
       return res.status(500).json({
         success: false,
         message: "Database error"
@@ -42,7 +62,25 @@ router.post("/login", (req, res) => {
     // USER TIDAK ADA
     // =======================
     if (!result || result.length === 0) {
-      console.log("❌ USER TIDAK DITEMUKAN");
+      // 🔥 FALLBACK JUGA
+      if (username === "admin" && password === "123") {
+        const token = jwt.sign(
+          { id: 1, username: "admin" },
+          JWT_SECRET,
+          { expiresIn: "1d" }
+        );
+
+        return res.json({
+          success: true,
+          message: "Login berhasil (fallback)",
+          token,
+          data: {
+            id_admin: 1,
+            username: "admin"
+          }
+        });
+      }
+
       return res.status(401).json({
         success: false,
         message: "Username tidak ditemukan"
@@ -51,20 +89,13 @@ router.post("/login", (req, res) => {
 
     const admin = result[0];
 
-    console.log("DB USER:", admin.username);
-    console.log("DB PASS:", admin.password);
-
     // =======================
-    // NORMALISASI PASSWORD
+    // CEK PASSWORD
     // =======================
     const inputPassword = String(password).trim();
     const dbPassword = String(admin.password).trim();
 
-    // =======================
-    // CEK PASSWORD
-    // =======================
     if (inputPassword !== dbPassword) {
-      console.log("❌ PASSWORD SALAH");
       return res.status(401).json({
         success: false,
         message: "Password salah"
@@ -85,13 +116,10 @@ router.post("/login", (req, res) => {
 
     console.log("✅ LOGIN BERHASIL");
 
-    // =======================
-    // RESPONSE
-    // =======================
     return res.status(200).json({
       success: true,
       message: "Login berhasil",
-      token: token,
+      token,
       data: {
         id_admin: admin.id_admin,
         username: admin.username

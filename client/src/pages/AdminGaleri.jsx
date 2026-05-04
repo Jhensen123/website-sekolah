@@ -16,21 +16,24 @@ const AdminGaleri = () => {
 
   const [editId, setEditId] = useState(null);
 
-  // 🔥 GET DATA (FIX)
-  const getData = () => {
-    setLoading(true);
+  // 🔥 GET DATA
+  const getData = async () => {
+    try {
+      setLoading(true);
 
-    fetch(`${BASE_URL}/api/galeri`)
-      .then(res => {
-        if (!res.ok) throw new Error("Gagal fetch galeri");
-        return res.json();
-      })
-      .then(res => {
-        const data = Array.isArray(res) ? res : (res.data || []);
-        setGaleri(data);
-      })
-      .catch(err => console.log("ERROR:", err))
-      .finally(() => setLoading(false));
+      const res = await fetch(`${BASE_URL}/api/galeri`);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Gagal ambil data");
+
+      setGaleri(Array.isArray(data.data) ? data.data : []);
+
+    } catch (err) {
+      console.log("ERROR GET:", err);
+      alert("Gagal ambil data galeri ❌");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -45,54 +48,59 @@ const AdminGaleri = () => {
     setForm({ ...form, foto: e.target.files[0] });
   };
 
-  // 🔥 SUBMIT
-  const handleSubmit = () => {
+  // 🔥 SUBMIT FIX TOTAL
+  const handleSubmit = async () => {
 
     if (!form.judul || !form.tanggal) {
-      alert("Judul dan tanggal wajib diisi");
+      alert("Judul dan tanggal wajib diisi ❌");
       return;
     }
 
     if (!editId && !form.foto) {
-      alert("Foto wajib diisi");
+      alert("Foto wajib diisi ❌");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("judul_foto", form.judul);
-    formData.append("tanggal", form.tanggal);
+    try {
+      const formData = new FormData();
+      formData.append("judul_foto", form.judul);
+      formData.append("tanggal", form.tanggal);
 
-    if (form.foto) {
-      formData.append("file_foto", form.foto);
+      if (form.foto) {
+        formData.append("file_foto", form.foto);
+      }
+
+      const url = editId
+        ? `${BASE_URL}/api/galeri/${editId}`
+        : `${BASE_URL}/api/galeri`;
+
+      const method = editId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Gagal simpan");
+
+      alert(data.message || "Berhasil ✅");
+
+      // reset form
+      setForm({
+        judul: "",
+        tanggal: "",
+        foto: null
+      });
+
+      setEditId(null);
+      getData();
+
+    } catch (err) {
+      console.log("ERROR SUBMIT:", err);
+      alert(err.message || "Gagal upload ❌");
     }
-
-    const url = editId
-      ? `${BASE_URL}/api/galeri/${editId}`
-      : `${BASE_URL}/api/galeri`;
-
-    const method = editId ? "PUT" : "POST";
-
-    fetch(url, {
-      method,
-      body: formData
-    })
-      .then(res => {
-        if (!res.ok) throw new Error("Gagal simpan");
-        return res.json();
-      })
-      .then(() => {
-        alert(editId ? "Berhasil update ✅" : "Berhasil tambah ✅");
-
-        setForm({
-          judul: "",
-          tanggal: "",
-          foto: null
-        });
-
-        setEditId(null);
-        getData();
-      })
-      .catch(() => alert("Gagal ❌"));
   };
 
   const handleEdit = (item) => {
@@ -105,16 +113,25 @@ const AdminGaleri = () => {
     setEditId(item.id_galeri);
   };
 
-  // 🔥 DELETE (FIX)
-  const handleDelete = (id) => {
-    fetch(`${BASE_URL}/api/galeri/${id}`, {
-      method: "DELETE"
-    })
-      .then(res => {
-        if (!res.ok) throw new Error("Gagal hapus");
-        getData();
-      })
-      .catch(() => alert("Gagal hapus ❌"));
+  const handleDelete = async (id) => {
+    if (!window.confirm("Yakin mau hapus?")) return;
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/galeri/${id}`, {
+        method: "DELETE"
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Gagal hapus");
+
+      alert("Berhasil hapus ✅");
+      getData();
+
+    } catch (err) {
+      console.log("ERROR DELETE:", err);
+      alert(err.message || "Gagal hapus ❌");
+    }
   };
 
   return (
@@ -145,7 +162,10 @@ const AdminGaleri = () => {
           style={{ width: "100%", padding: "10px", marginBottom: "10px" }}
         />
 
-        <input type="file" onChange={handleFoto} key={editId || form.tanggal} />
+        <input
+          type="file"
+          onChange={handleFoto}
+        />
 
         <br /><br />
 
@@ -165,7 +185,6 @@ const AdminGaleri = () => {
         </button>
       </div>
 
-      {/* 🔥 LIST */}
       {loading ? (
         <p style={{ textAlign: "center" }}>Loading...</p>
       ) : (
@@ -174,7 +193,7 @@ const AdminGaleri = () => {
           gridTemplateColumns: "repeat(3, 1fr)",
           gap: "20px"
         }}>
-          {[...(galeri || [])]
+          {galeri
             .sort((a, b) => (b.tanggal || "").localeCompare(a.tanggal || ""))
             .map((item) => (
               <div key={item.id_galeri} style={{

@@ -2,9 +2,20 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db");
 
-// ===== GET KOMENTAR =====
+// =====================
+// 🔥 GET KOMENTAR
+// =====================
 router.get("/", (req, res) => {
-  const sql = "SELECT * FROM komentar_saran ORDER BY id_komentar DESC";
+  const sql = `
+    SELECT 
+      id_komentar,
+      nama_pengirim,
+      isi_komentar,
+      DATE_FORMAT(tanggal_kirim, '%Y-%m-%d') as tanggal_kirim,
+      status_baca
+    FROM komentar_saran
+    ORDER BY id_komentar DESC
+  `;
 
   db.query(sql, (err, result) => {
     if (err) {
@@ -15,18 +26,20 @@ router.get("/", (req, res) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: result || []
     });
   });
 });
 
-// ===== POST KOMENTAR =====
+// =====================
+// 🔥 POST KOMENTAR
+// =====================
 router.post("/", (req, res) => {
   const { nama_pengirim, isi_komentar } = req.body;
 
-  // VALIDASI SEDERHANA
+  // VALIDASI
   if (!nama_pengirim || !isi_komentar) {
     return res.status(400).json({
       success: false,
@@ -37,29 +50,73 @@ router.post("/", (req, res) => {
   const sql = `
     INSERT INTO komentar_saran 
     (nama_pengirim, isi_komentar, tanggal_kirim, status_baca)
-    VALUES (?, ?, NOW(), 0)
+    VALUES (?, ?, CURDATE(), 0)
   `;
 
   db.query(sql, [nama_pengirim, isi_komentar], (err, result) => {
     if (err) {
-      console.log("ERROR DB:", err);
+      console.log("ERROR INSERT:", err);
       return res.status(500).json({
         success: false,
         message: "Gagal kirim komentar"
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: "Komentar berhasil dikirim",
-      id: result.insertId
+      insertId: result.insertId
     });
   });
 });
 
-// ===== DELETE KOMENTAR =====
+// =====================
+// 🔥 UPDATE STATUS (DIBACA)
+// =====================
+router.put("/:id", (req, res) => {
+  const id = Number(req.params.id);
+
+  if (isNaN(id)) {
+    return res.status(400).json({
+      success: false,
+      message: "ID tidak valid"
+    });
+  }
+
+  const sql = `
+    UPDATE komentar_saran
+    SET status_baca = 1
+    WHERE id_komentar = ?
+  `;
+
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.log("ERROR UPDATE:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Gagal update status"
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Komentar ditandai sudah dibaca"
+    });
+  });
+});
+
+// =====================
+// 🔥 DELETE KOMENTAR
+// =====================
 router.delete("/:id", (req, res) => {
-  const id = req.params.id;
+  const id = Number(req.params.id);
+
+  if (isNaN(id)) {
+    return res.status(400).json({
+      success: false,
+      message: "ID tidak valid"
+    });
+  }
 
   const sql = "DELETE FROM komentar_saran WHERE id_komentar = ?";
 
@@ -72,7 +129,7 @@ router.delete("/:id", (req, res) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: "Komentar berhasil dihapus"
     });

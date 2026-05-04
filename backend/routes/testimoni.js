@@ -11,24 +11,27 @@ router.post("/", (req, res) => {
   // VALIDASI
   if (!nama || !isi_testimoni) {
     return res.status(400).json({
+      success: false,
       message: "Nama dan isi testimoni wajib diisi"
     });
   }
 
   const sql = `
     INSERT INTO testimoni (nama, isi_testimoni, tanggal, status_publish)
-    VALUES (?, ?, NOW(), 0)
+    VALUES (?, ?, CURDATE(), 0)
   `;
 
   db.query(sql, [nama, isi_testimoni], (err, result) => {
     if (err) {
       console.log("ERROR INSERT:", err);
       return res.status(500).json({
+        success: false,
         message: "Gagal kirim testimoni"
       });
     }
 
-    res.json({
+    return res.json({
+      success: true,
       message: "Berhasil kirim testimoni",
       insertId: result.insertId
     });
@@ -54,12 +57,14 @@ router.get("/admin", (req, res) => {
     if (err) {
       console.log("ERROR GET ADMIN:", err);
       return res.status(500).json({
+        success: false,
         message: "Gagal ambil data testimoni"
       });
     }
 
-    res.json({
-      data: result
+    return res.json({
+      success: true,
+      data: result || []
     });
   });
 });
@@ -83,12 +88,14 @@ router.get("/", (req, res) => {
     if (err) {
       console.log("ERROR GET USER:", err);
       return res.status(500).json({
+        success: false,
         message: "Gagal ambil testimoni"
       });
     }
 
-    res.json({
-      data: result
+    return res.json({
+      success: true,
+      data: result || []
     });
   });
 });
@@ -102,6 +109,7 @@ router.put("/:id", (req, res) => {
 
   if (isNaN(id)) {
     return res.status(400).json({
+      success: false,
       message: "ID tidak valid"
     });
   }
@@ -116,17 +124,20 @@ router.put("/:id", (req, res) => {
     if (err) {
       console.log("ERROR UPDATE:", err);
       return res.status(500).json({
+        success: false,
         message: "Gagal update status"
       });
     }
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
+        success: false,
         message: "Data tidak ditemukan"
       });
     }
 
-    res.json({
+    return res.json({
+      success: true,
       message: "Status berhasil diupdate",
       affectedRows: result.affectedRows
     });
@@ -134,7 +145,7 @@ router.put("/:id", (req, res) => {
 });
 
 // =====================
-// 🔥 DELETE (OPTIONAL)
+// 🔥 DELETE
 // =====================
 router.delete("/:id", (req, res) => {
   const id = Number(req.params.id);
@@ -146,11 +157,13 @@ router.delete("/:id", (req, res) => {
       if (err) {
         console.log("ERROR DELETE:", err);
         return res.status(500).json({
+          success: false,
           message: "Gagal hapus"
         });
       }
 
-      res.json({
+      return res.json({
+        success: true,
         message: "Berhasil dihapus"
       });
     }
